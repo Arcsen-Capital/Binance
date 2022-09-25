@@ -1,49 +1,46 @@
 #include "../include/binance.h"
-
-#include <utility>
 #include "../include/binance_logger.h"
 #include "../include/binance_utils.h"
+#include <utility>
 
 
 //---------------------------------
 void
-binance::init()
-{
+binance::init() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
 }
 
 
 void
-binance::cleanup()
-{
+binance::cleanup() {
     curl_easy_cleanup(curl);
     curl_global_cleanup();
 }
 
 void binance::write_log(Json::Value &json_result,
-                        const basic_string<char>& request_name,
-                        basic_string<char>& url,
+                        const basic_string<char> &request_name,
+                        basic_string<char> &url,
                         const string &str_result,
                         bool show_url
-                        ) {
+) {
 
-    binance_logger::write_log( "<binance::" + request_name + ">" + (!show_url ? "" :"url = |%s|"), url.c_str() ) ;
+    binance_logger::write_log("<binance::" + request_name + ">" + (!show_url ? "" : "url = |%s|"), url.c_str());
 
-    if ( !str_result.empty() ) {
+    if (!str_result.empty()) {
 
         try {
             Json::Reader reader;
             json_result.clear();
-            reader.parse( str_result , json_result );
+            reader.parse(str_result, json_result);
 
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::" + request_name + "> Error ! %s", e.what() );
+        } catch (exception &e) {
+            binance_logger::write_log("<binance::" + request_name + "> Error ! %s", e.what());
         }
-        binance_logger::write_log( "<binance::" + request_name + "> Done." ) ;
+        binance_logger::write_log("<binance::" + request_name + "> Done.");
 
     } else {
-        binance_logger::write_log( "<binance::" + request_name + "> Failed to get anything." ) ;
+        binance_logger::write_log("<binance::" + request_name + "> Failed to get anything.");
     }
 
 }
@@ -52,28 +49,27 @@ void binance::write_log(Json::Value &json_result,
 //GET api/v1/exchangeInfo
 //------------------
 void
-binance::get_exchangeInfo( Json::Value &json_result)
-{
+binance::get_exchangeInfo(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/exchangeInfo";
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_exchangeInfo", url, str_result, false);
 }
+
 //------------------
 //GET /api/v1/time
 //------------
 
 
 void
-binance::get_serverTime( Json::Value &json_result)
-{
+binance::get_serverTime(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/time";
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_serverTime", url, str_result, false);
 }
 
@@ -85,13 +81,12 @@ binance::get_serverTime( Json::Value &json_result)
 	GET /api/v1/ticker/allPrices
 */
 void
-binance::get_allPrices( Json::Value &json_result )
-{
+binance::get_allPrices(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allPrices";
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_allPrices", url, str_result, false);
 
 }
@@ -100,18 +95,17 @@ binance::get_allPrices( Json::Value &json_result )
 //----------
 // Get Single Pair's Price
 double
-binance::get_price( const char *symbol )
-{
-    binance_logger::write_log( "<binance::get_price>" ) ;
+binance::get_price(const char *symbol) {
+    binance_logger::write_log("<binance::get_price>");
 
     double ret = 0.0;
     Json::Value alltickers;
     string str_symbol = string_toupper(symbol);
-    get_allPrices( alltickers );
+    get_allPrices(alltickers);
 
-    for (auto & allticker : alltickers) {
-        if ( allticker["symbol"].asString() == str_symbol ) {
-            ret = atof( allticker["price"].asString().c_str() );
+    for (auto &allticker: alltickers) {
+        if (allticker["symbol"].asString() == str_symbol) {
+            ret = atof(allticker["price"].asString().c_str());
             break;
         }
 
@@ -131,30 +125,27 @@ binance::get_price( const char *symbol )
 */
 
 void
-binance::get_allBookTickers(  Json::Value &json_result )
-{
+binance::get_allBookTickers(Json::Value &json_result) {
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allBookTickers";
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_allBookTickers", url, str_result, false);
 
 }
 
 
-
 //--------------
 void
-binance::get_bookTicker( const char *symbol, Json::Value &json_result )
-{
-    binance_logger::write_log( "<binance::get_BookTickers>" ) ;
+binance::get_bookTicker(const char *symbol, Json::Value &json_result) {
+    binance_logger::write_log("<binance::get_BookTickers>");
 
     Json::Value alltickers;
     string str_symbol = string_toupper(symbol);
-    get_allBookTickers( alltickers );
+    get_allBookTickers(alltickers);
 
-    for (auto & allticker : alltickers) {
-        if ( allticker["symbol"].asString() == str_symbol ) {
+    for (auto &allticker: alltickers) {
+        if (allticker["symbol"].asString() == str_symbol) {
 
             json_result = allticker;
 
@@ -181,21 +172,20 @@ void
 binance::get_depth(
         const char *symbol,
         int limit,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
 
     string url(BINANCE_HOST);
     url += "/api/v1/depth?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
     querystring.append("&limit=");
-    querystring.append( to_string( limit ) );
+    querystring.append(to_string(limit));
 
-    url.append( querystring );
+    url.append(querystring);
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_depth", url, str_result, true);
 
 }
@@ -228,35 +218,34 @@ binance::get_aggTrades(
         time_t endTime,
         int limit,
         Json::Value &json_result
-)
-{
+) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/aggTrades?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
 
-    if ( startTime != 0 && endTime != 0 ) {
+    if (startTime != 0 && endTime != 0) {
 
         querystring.append("&startTime=");
-        querystring.append( to_string( startTime ) );
+        querystring.append(to_string(startTime));
 
         querystring.append("&endTime=");
-        querystring.append( to_string( endTime ) );
+        querystring.append(to_string(endTime));
 
     } else {
         querystring.append("&fromId=");
-        querystring.append( to_string( fromId ) );
+        querystring.append(to_string(fromId));
 
         querystring.append("&limit=");
-        querystring.append( to_string( limit ) );
+        querystring.append(to_string(limit));
     }
 
-    url.append( querystring );
+    url.append(querystring);
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_aggTrades", url, str_result, true);
 
 }
@@ -271,22 +260,20 @@ Name	Type	Mandatory	Description
 symbol	STRING	YES
 */
 void
-binance::get_24hr( const char *symbol, Json::Value &json_result )
-{
+binance::get_24hr(const char *symbol, Json::Value &json_result) {
 
-    binance_logger::write_log( "<binance::get_24hr>" ) ;
+    binance_logger::write_log("<binance::get_24hr>");
 
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/24hr?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
 
-
-    url.append( querystring );
+    url.append(querystring);
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "_get_24hr", url, str_result, true);
 
 
@@ -314,35 +301,34 @@ binance::get_klines(
         int limit,
         time_t startTime,
         time_t endTime,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/klines?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
-    querystring.append( "&interval=" );
-    querystring.append( interval );
+    querystring.append("&interval=");
+    querystring.append(interval);
 
-    if ( startTime > 0 && endTime > 0 ) {
+    if (startTime > 0 && endTime > 0) {
 
         querystring.append("&startTime=");
-        querystring.append( to_string( startTime ) );
+        querystring.append(to_string(startTime));
 
         querystring.append("&endTime=");
-        querystring.append( to_string( endTime ) );
+        querystring.append(to_string(endTime));
 
-    } else if ( limit > 0 ) {
+    } else if (limit > 0) {
         querystring.append("&limit=");
-        querystring.append( to_string( limit ) );
+        querystring.append(to_string(limit));
     }
 
 
-    url.append( querystring );
+    url.append(querystring);
     string str_result;
-    curl_api( url, str_result );
+    curl_api(url, str_result);
     write_log(json_result, "get_klines", url, str_result, true);
 
 }
@@ -360,12 +346,11 @@ timestamp	LONG	YES
 
 
 void
-binance::get_account( long recvWindow,  Json::Value &json_result )
-{
+binance::get_account(long recvWindow, Json::Value &json_result) {
 
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_account> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_account> API Key and Secret Key has not been set.");
+        return;
     }
 
 
@@ -375,27 +360,27 @@ binance::get_account( long recvWindow,  Json::Value &json_result )
 
 
     string querystring("timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow ) );
+        querystring.append(to_string(recvWindow));
     }
 
-    string signature =  hmac_sha256( secret_key.c_str() , querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
-    vector <string> extra_http_header;
+    url.append(querystring);
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action );
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
     write_log(json_result, "get_account", url, str_result, false);
 
 }
@@ -421,12 +406,11 @@ binance::get_myTrades(
         int limit,
         long fromId,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_myTrades> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_myTrades> API Key and Secret Key has not been set.");
+        return;
     }
 
 
@@ -434,42 +418,42 @@ binance::get_myTrades(
     url += "/api/v3/myTrades?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
-    if ( limit > 0 ) {
+    if (limit > 0) {
         querystring.append("&limit=");
-        querystring.append( to_string( limit ) );
+        querystring.append(to_string(limit));
     }
 
-    if ( fromId > 0 ) {
+    if (fromId > 0) {
         querystring.append("&fromId=");
-        querystring.append( to_string( fromId ) );
+        querystring.append(to_string(fromId));
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow ) );
+        querystring.append(to_string(recvWindow));
     }
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str() , querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
-    vector <string> extra_http_header;
+    url.append(querystring);
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string action = "GET";
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action );
-    write_log(json_result,"get_myTrades", url, str_result, true);
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_myTrades", url, str_result, true);
 
 }
 
@@ -489,11 +473,10 @@ binance::get_openOrders(
         const char *symbol,
         long recvWindow,
         Json::Value &json_result
-)
-{
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_openOrders> API Key and Secret Key has not been set." ) ;
-        return ;
+) {
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_openOrders> API Key and Secret Key has not been set.");
+        return;
     }
 
 
@@ -501,34 +484,34 @@ binance::get_openOrders(
     url += "/api/v3/openOrders?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow) );
+        querystring.append(to_string(recvWindow));
     }
 
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
-    vector <string> extra_http_header;
+    url.append(querystring);
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
 
     string action = "GET";
-    string post_data ="";
+    string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
     write_log(json_result, "get_openOrders", url, str_result, true);
 
 }
@@ -553,12 +536,10 @@ binance::get_allOrders(
         int limit,
         long recvWindow,
         Json::Value &json_result
-)
-
-{
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_allOrders> API Key and Secret Key has not been set." ) ;
-        return ;
+) {
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_allOrders> API Key and Secret Key has not been set.");
+        return;
     }
 
 
@@ -566,44 +547,44 @@ binance::get_allOrders(
     url += "/api/v3/allOrders?";
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
-    if ( orderId > 0 ) {
+    if (orderId > 0) {
         querystring.append("&orderId=");
-        querystring.append( to_string( orderId ) );
+        querystring.append(to_string(orderId));
     }
 
-    if ( limit > 0 ) {
+    if (limit > 0) {
         querystring.append("&limit=");
-        querystring.append( to_string( limit ) );
+        querystring.append(to_string(limit));
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow ) );
+        querystring.append(to_string(recvWindow));
     }
 
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
-    vector <string> extra_http_header;
+    url.append(querystring);
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
 
     string action = "GET";
-    string post_data ="";
+    string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action );
-    write_log(json_result, "get_allOrders",url, str_result, true);
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_allOrders", url, str_result, true);
 
 }
 
@@ -638,14 +619,11 @@ binance::send_order(
         double stopPrice,
         double icebergQty,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    binance_logger::write_log( "<binance::send_order>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::send_order> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -654,83 +632,65 @@ binance::send_order(
     string action = "POST";
 
     string post_data("symbol=");
-    post_data.append( symbol );
+    post_data.append(symbol);
 
     post_data.append("&side=");
-    post_data.append( side );
+    post_data.append(side);
 
     post_data.append("&type=");
-    post_data.append( type );
-    if(strcmp(type, "MARKET") != 0)//type != MARKET
+    post_data.append(type);
+    if (strcmp(type, "MARKET") != 0)//type != MARKET
     {
         post_data.append("&timeInForce=");
-        post_data.append( timeInForce );
+        post_data.append(timeInForce);
         post_data.append("&price=");
-        post_data.append( to_string( price) );
+        post_data.append(to_string(price));
     }
     post_data.append("&quantity=");
-    post_data.append( to_string( quantity) );
+    post_data.append(to_string(quantity));
 
 
-    if ( strlen( newClientOrderId ) > 0 ) {
+    if (strlen(newClientOrderId) > 0) {
         post_data.append("&newClientOrderId=");
-        post_data.append( newClientOrderId );
+        post_data.append(newClientOrderId);
     }
 
-    if ( stopPrice > 0.0 ) {
+    if (stopPrice > 0.0) {
         post_data.append("&stopPrice=");
-        post_data.append( to_string( stopPrice ) );
+        post_data.append(to_string(stopPrice));
     }
 
-    if ( icebergQty > 0.0 ) {
+    if (icebergQty > 0.0) {
         post_data.append("&icebergQty=");
-        post_data.append( to_string( icebergQty ) );
+        post_data.append(to_string(icebergQty));
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         post_data.append("&recvWindow=");
-        post_data.append( to_string( recvWindow) );
+        post_data.append(to_string(recvWindow));
     }
 
 
     post_data.append("&timestamp=");
-    post_data.append( to_string( get_current_ms_epoch() ) );
+    post_data.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), post_data.c_str() );
-    post_data.append( "&signature=");
-    post_data.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), post_data.c_str());
+    post_data.append("&signature=");
+    post_data.append(signature);
 
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    binance_logger::write_log( "<binance::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+    //binance_logger::write_log("<binance::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::send_order> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::send_order> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::send_order> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::send_order> Done.\n" ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "send_order", url, str_result, true);
 
 }
-
 
 //------------------
 /*
@@ -751,14 +711,11 @@ binance::get_order(
         long orderId,
         const char *origClientOrderId,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    binance_logger::write_log( "<binance::get_order>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_order> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_order> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -767,71 +724,46 @@ binance::get_order(
 
 
     string querystring("symbol=");
-    querystring.append( symbol );
+    querystring.append(symbol);
 
-    if ( orderId > 0 ) {
+    if (orderId > 0) {
         querystring.append("&orderId=");
-        querystring.append( to_string( orderId ) );
+        querystring.append(to_string(orderId));
     }
 
-    if ( strlen( origClientOrderId ) > 0 ) {
+    if (strlen(origClientOrderId) > 0) {
         querystring.append("&origClientOrderId=");
-        querystring.append( origClientOrderId );
+        querystring.append(origClientOrderId);
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow) );
+        querystring.append(to_string(recvWindow));
     }
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
+    url.append(querystring);
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string post_data = "";
 
-    binance_logger::write_log( "<binance::get_order> url = |%s|" , url.c_str() ) ;
+    //binance_logger::write_log("<binance::get_order> url = |%s|", url.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_order> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_order> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_order> Failed to get anything." ) ;
-    }
-
-
-    binance_logger::write_log( "<binance::get_order> Done.\n" ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_order", url, str_result, true);
 
 }
-
-
-
-
-
-
-
 
 //------------
 /*
@@ -854,14 +786,11 @@ binance::cancel_order(
         const char *origClientOrderId,
         const char *newClientOrderId,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    binance_logger::write_log( "<binance::send_order>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::send_order> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -870,226 +799,168 @@ binance::cancel_order(
     string action = "DELETE";
 
     string post_data("symbol=");
-    post_data.append( symbol );
+    post_data.append(symbol);
 
-    if ( orderId > 0 ) {
+    if (orderId > 0) {
         post_data.append("&orderId=");
-        post_data.append( to_string( orderId ) );
+        post_data.append(to_string(orderId));
     }
 
-    if ( strlen( origClientOrderId ) > 0 ) {
+    if (strlen(origClientOrderId) > 0) {
         post_data.append("&origClientOrderId=");
-        post_data.append( origClientOrderId );
+        post_data.append(origClientOrderId);
     }
 
-    if ( strlen( newClientOrderId ) > 0 ) {
+    if (strlen(newClientOrderId) > 0) {
         post_data.append("&newClientOrderId=");
-        post_data.append( newClientOrderId );
+        post_data.append(newClientOrderId);
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         post_data.append("&recvWindow=");
-        post_data.append( to_string( recvWindow) );
+        post_data.append(to_string(recvWindow));
     }
 
 
     post_data.append("&timestamp=");
-    post_data.append( to_string( get_current_ms_epoch() ) );
+    post_data.append(to_string(get_current_ms_epoch()));
 
 
-    string signature =  hmac_sha256( secret_key.c_str(), post_data.c_str() );
-    post_data.append( "&signature=");
-    post_data.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), post_data.c_str());
+    post_data.append("&signature=");
+    post_data.append(signature);
 
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    binance_logger::write_log( "<binance::send_order> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+    //binance_logger::write_log("<binance::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::send_order> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::send_order> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::send_order> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::send_order> Done.\n" ) ;
-
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "send_order", url, str_result, true);
 }
-
-
-
-
 
 //--------------------
 //Start user data stream (API-KEY)
 
 void
-binance::start_userDataStream( Json::Value &json_result )
-{
-    binance_logger::write_log( "<binance::start_userDataStream>" ) ;
+binance::start_userDataStream(Json::Value &json_result) {
 
-    if ( api_key.empty() ) {
-        binance_logger::write_log( "<binance::start_userDataStream> API Key has not been set." ) ;
-        return ;
+    if (api_key.empty()) {
+        binance_logger::write_log("<binance::start_userDataStream> API Key has not been set.");
+        return;
     }
 
 
     string url(BINANCE_HOST);
     url += "/api/v1/userDataStream";
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
 
 
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
-
-    binance_logger::write_log( "<binance::start_userDataStream> url = |%s|" , url.c_str() ) ;
 
     string action = "POST";
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::start_userDataStream> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::start_userDataStream> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::start_userDataStream> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::start_userDataStream> Done.\n" ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "start_userDataStream", url, str_result, true);
 
 }
-
-
-
-
-
-
-
-
 
 //--------------------
 //Keepalive user data stream (API-KEY)
 void
-binance::keep_userDataStream( const char *listenKey )
-{
-    binance_logger::write_log( "<binance::keep_userDataStream>" ) ;
+binance::keep_userDataStream(const char *listenKey) {
+    binance_logger::write_log("<binance::keep_userDataStream>");
 
-    if ( api_key.empty() ) {
-        binance_logger::write_log( "<binance::keep_userDataStream> API Key has not been set." ) ;
-        return ;
+    if (api_key.empty()) {
+        binance_logger::write_log("<binance::keep_userDataStream> API Key has not been set.");
+        return;
     }
 
 
     string url(BINANCE_HOST);
     url += "/api/v1/userDataStream";
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
 
 
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string action = "PUT";
     string post_data("listenKey=");
-    post_data.append( listenKey );
+    post_data.append(listenKey);
 
-    binance_logger::write_log( "<binance::keep_userDataStream> url = |%s|, post_data = |%s|" , url.c_str() , post_data.c_str() ) ;
+    binance_logger::write_log("<binance::keep_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
+                              post_data.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
 
-    if ( !str_result.empty() ) {
+    if (!str_result.empty()) {
 
-        binance_logger::write_log( "<binance::keep_userDataStream> Done." ) ;
+        binance_logger::write_log("<binance::keep_userDataStream> Done.");
 
     } else {
-        binance_logger::write_log( "<binance::keep_userDataStream> Failed to get anything." ) ;
+        binance_logger::write_log("<binance::keep_userDataStream> Failed to get anything.");
     }
 
-    binance_logger::write_log( "<binance::keep_userDataStream> Done.\n" ) ;
+    binance_logger::write_log("<binance::keep_userDataStream> Done.\n");
 
 }
-
-
-
-
 
 //--------------------
 //Keepalive user data stream (API-KEY)
 void
-binance::close_userDataStream( const char *listenKey )
-{
-    binance_logger::write_log( "<binance::close_userDataStream>" ) ;
+binance::close_userDataStream(const char *listenKey) {
+    binance_logger::write_log("<binance::close_userDataStream>");
 
-    if ( api_key.empty() ) {
-        binance_logger::write_log( "<binance::close_userDataStream> API Key has not been set." ) ;
-        return ;
+    if (api_key.empty()) {
+        binance_logger::write_log("<binance::close_userDataStream> API Key has not been set.");
+        return;
     }
 
 
     string url(BINANCE_HOST);
     url += "/api/v1/userDataStream";
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
 
 
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string action = "DELETE";
     string post_data("listenKey=");
-    post_data.append( listenKey );
+    post_data.append(listenKey);
 
-    binance_logger::write_log( "<binance::close_userDataStream> url = |%s|, post_data = |%s|" , url.c_str() , post_data.c_str() ) ;
+    binance_logger::write_log("<binance::close_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
+                              post_data.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
 
-    if ( !str_result.empty() ) {
+    if (!str_result.empty()) {
 
-        binance_logger::write_log( "<binance::close_userDataStream> Done." ) ;
+        binance_logger::write_log("<binance::close_userDataStream> Done.");
 
     } else {
-        binance_logger::write_log( "<binance::close_userDataStream> Failed to get anything." ) ;
+        binance_logger::write_log("<binance::close_userDataStream> Failed to get anything.");
     }
 
-    binance_logger::write_log( "<binance::close_userDataStream> Done.\n" ) ;
+    binance_logger::write_log("<binance::close_userDataStream> Done.\n");
 
 }
-
-
-
 
 //-------------
 /*
@@ -1115,14 +986,11 @@ binance::withdraw(
         double amount,
         const char *name,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    binance_logger::write_log( "<binance::withdraw>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::send_order> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -1131,67 +999,49 @@ binance::withdraw(
     string action = "POST";
 
     string post_data("asset=");
-    post_data.append( asset );
+    post_data.append(asset);
 
-    post_data.append("&address=" );
-    post_data.append( address );
+    post_data.append("&address=");
+    post_data.append(address);
 
-    if ( strlen(addressTag) > 0 ) {
-        post_data.append( "&addressTag=");
-        post_data.append( addressTag );
+    if (strlen(addressTag) > 0) {
+        post_data.append("&addressTag=");
+        post_data.append(addressTag);
     }
 
-    post_data.append( "&amount=");
-    post_data.append( to_string( amount ));
+    post_data.append("&amount=");
+    post_data.append(to_string(amount));
 
-    if ( strlen( name ) > 0 ) {
+    if (strlen(name) > 0) {
         post_data.append("&name=");
         post_data.append(name);
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         post_data.append("&recvWindow=");
-        post_data.append( to_string( recvWindow) );
+        post_data.append(to_string(recvWindow));
     }
 
     post_data.append("&timestamp=");
-    post_data.append( to_string( get_current_ms_epoch() ) );
+    post_data.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), post_data.c_str() );
-    post_data.append( "&signature=");
-    post_data.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), post_data.c_str());
+    post_data.append("&signature=");
+    post_data.append(signature);
 
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    binance_logger::write_log( "<binance::withdraw> url = |%s|, post_data = |%s|" , url.c_str(), post_data.c_str() ) ;
+    //binance_logger::write_log("<binance::withdraw> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data, action ) ;
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::withdraw> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::withdraw> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::withdraw> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::withdraw> Done.\n" ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "withdraw", url, str_result, true);
 
 }
-
 
 
 /*
@@ -1211,19 +1061,15 @@ timestamp	LONG	YES
 void
 binance::get_depositHistory(
         const char *asset,
-        int  status,
+        int status,
         long startTime,
         long endTime,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-
-    binance_logger::write_log( "<binance::get_depostHistory>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_depostHistory> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_depostHistory> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -1232,79 +1078,52 @@ binance::get_depositHistory(
 
     string querystring("");
 
-    if ( strlen( asset ) > 0 ) {
-        querystring.append( "asset=" );
-        querystring.append( asset );
+    if (strlen(asset) > 0) {
+        querystring.append("asset=");
+        querystring.append(asset);
     }
 
-    if ( status > 0 ) {
+    if (status > 0) {
         querystring.append("&status=");
-        querystring.append( to_string( status ) );
+        querystring.append(to_string(status));
     }
 
-    if ( startTime > 0 ) {
+    if (startTime > 0) {
         querystring.append("&startTime=");
-        querystring.append( to_string( startTime ) );
+        querystring.append(to_string(startTime));
     }
 
-    if ( endTime > 0 ) {
+    if (endTime > 0) {
         querystring.append("&endTime=");
-        querystring.append( to_string( endTime ) );
+        querystring.append(to_string(endTime));
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow) );
+        querystring.append(to_string(recvWindow));
     }
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
+    url.append(querystring);
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string post_data = "";
 
-    binance_logger::write_log( "<binance::get_depostHistory> url = |%s|" , url.c_str() ) ;
-
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_depostHistory", url, str_result, false);
 
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_depostHistory> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_depostHistory> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_depostHistory> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_depostHistory> Done.\n" ) ;
 }
-
-
-
-
-
-
-
-
-
 
 //---------
 
@@ -1326,19 +1145,15 @@ timestamp	LONG	YES
 void
 binance::get_withdrawHistory(
         const char *asset,
-        int  status,
+        int status,
         long startTime,
         long endTime,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-
-    binance_logger::write_log( "<binance::get_withdrawHistory>" ) ;
-
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_withdrawHistory> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_withdrawHistory> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -1347,75 +1162,52 @@ binance::get_withdrawHistory(
 
     string querystring("");
 
-    if ( strlen( asset ) > 0 ) {
-        querystring.append( "asset=" );
-        querystring.append( asset );
+    if (strlen(asset) > 0) {
+        querystring.append("asset=");
+        querystring.append(asset);
     }
 
-    if ( status > 0 ) {
+    if (status > 0) {
         querystring.append("&status=");
-        querystring.append( to_string( status ) );
+        querystring.append(to_string(status));
     }
 
-    if ( startTime > 0 ) {
+    if (startTime > 0) {
         querystring.append("&startTime=");
-        querystring.append( to_string( startTime ) );
+        querystring.append(to_string(startTime));
     }
 
-    if ( endTime > 0 ) {
+    if (endTime > 0) {
         querystring.append("&endTime=");
-        querystring.append( to_string( endTime ) );
+        querystring.append(to_string(endTime));
     }
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow) );
+        querystring.append(to_string(recvWindow));
     }
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
+    url.append(querystring);
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string post_data = "";
 
-    binance_logger::write_log( "<binance::get_withdrawHistory> url = |%s|" , url.c_str() ) ;
-
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_withdrawHistory", url, str_result, false);
 
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_withdrawHistory> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_withdrawHistory> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_withdrawHistory> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_withdrawHistory> Done.\n" ) ;
 }
-
-
-
-
-
 
 //--------------
 /*
@@ -1431,17 +1223,15 @@ timestamp	LONG	YES
 
 */
 
-
 void
 binance::get_depositAddress(
         const char *asset,
         long recvWindow,
-        Json::Value &json_result )
-{
+        Json::Value &json_result) {
 
-    if ( api_key.empty() || secret_key.empty() ) {
-        binance_logger::write_log( "<binance::get_depositAddress> API Key and Secret Key has not been set." ) ;
-        return ;
+    if (api_key.empty() || secret_key.empty()) {
+        binance_logger::write_log("<binance::get_depositAddress> API Key and Secret Key has not been set.");
+        return;
     }
 
     string url(BINANCE_HOST);
@@ -1449,109 +1239,102 @@ binance::get_depositAddress(
     string action = "GET";
 
     string querystring("asset=");
-    querystring.append( asset );
+    querystring.append(asset);
 
-    if ( recvWindow > 0 ) {
+    if (recvWindow > 0) {
         querystring.append("&recvWindow=");
-        querystring.append( to_string( recvWindow) );
+        querystring.append(to_string(recvWindow));
     }
 
     querystring.append("&timestamp=");
-    querystring.append( to_string( get_current_ms_epoch() ) );
+    querystring.append(to_string(get_current_ms_epoch()));
 
-    string signature =  hmac_sha256( secret_key.c_str(), querystring.c_str() );
-    querystring.append( "&signature=");
-    querystring.append( signature );
+    string signature = hmac_sha256(secret_key.c_str(), querystring.c_str());
+    querystring.append("&signature=");
+    querystring.append(signature);
 
-    url.append( querystring );
+    url.append(querystring);
 
-    vector <string> extra_http_header;
+    vector<string> extra_http_header;
     string header_chunk("X-MBX-APIKEY: ");
-    header_chunk.append( api_key );
+    header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
-    write_log(json_result,"get_depositAddress", url, str_result,true);
+    curl_api_with_header(url, str_result, extra_http_header, post_data, action);
+    write_log(json_result, "get_depositAddress", url, str_result, true);
 
 }
 
 //-----------------
 // Curl's callback
 size_t
-binance::curl_cb( void *content, size_t size, size_t nmemb, std::string *buffer )
-{
-    binance_logger::write_log( "<binance::curl_cb> " ) ;
+binance::curl_cb(void *content, size_t size, size_t nmemb, std::string *buffer) {
+    binance_logger::write_log("<binance::curl_cb> ");
 
-    buffer->append((char*)content, size*nmemb);
+    buffer->append((char *) content, size * nmemb);
 
-    binance_logger::write_log( "<binance::curl_cb> done" ) ;
-    return size*nmemb;
+    binance_logger::write_log("<binance::curl_cb> done");
+    return size * nmemb;
 }
-
-
-
-
-
 
 //--------------------------------------------------
 void
-binance::curl_api( string &url, string &result_json ) {
-    vector <string> v;
+binance::curl_api(string &url, string &result_json) {
+    vector<string> v;
     string action = "GET";
     string post_data = "";
-    curl_api_with_header( url , result_json , v, post_data , action );
+    curl_api_with_header(url, result_json, v, post_data, action);
 }
-
 
 
 //--------------------
 // Do the curl
 void
-binance::curl_api_with_header( string &url, string &str_result, vector <string> &extra_http_header , string &post_data , string &action )
-{
+binance::curl_api_with_header(string &url, string &str_result, vector<string> &extra_http_header, string &post_data,
+                              string &action) {
 
-    binance_logger::write_log( "<binance::curl_api>" ) ;
+    binance_logger::write_log("<binance::curl_api>");
 
     CURLcode res;
 
-    if( curl ) {
+    if (curl) {
 
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str() );
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_cb);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_result );
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_result);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
         curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
 
-        if ( !extra_http_header.empty() ) {
+        if (!extra_http_header.empty()) {
 
             struct curl_slist *chunk = nullptr;
-            for ( int i = 0 ; i < extra_http_header.size() ;i++ ) {
-                chunk = curl_slist_append(chunk, extra_http_header[i].c_str() );
+            for (int i = 0; i < extra_http_header.size(); i++) {
+                chunk = curl_slist_append(chunk, extra_http_header[i].c_str());
             }
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
         }
 
-        if ( !post_data.empty() || action == "POST" || action == "PUT" || action == "DELETE" ) {
+        if (!post_data.empty() || action == "POST" || action == "PUT" || action == "DELETE") {
 
-            if ( action == "PUT" || action == "DELETE" ) {
-                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, action.c_str() );
+            if (action == "PUT" || action == "DELETE") {
+                curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, action.c_str());
             }
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str() );
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data.c_str());
         }
 
         res = curl_easy_perform(curl);
 
         /* Check for errors */
-        if ( res != CURLE_OK ) {
-            binance_logger::write_log( "<binance::curl_api> curl_easy_perform() failed: %s" , curl_easy_strerror(res) ) ;
+        if (res != CURLE_OK) {
+            binance_logger::write_log("<binance::curl_api> curl_easy_perform() failed: %s", curl_easy_strerror(res));
         }
 
     }
 
-    binance_logger::write_log( "<binance::curl_api> done" ) ;
+    binance_logger::write_log("<binance::curl_api> done");
 
 }
 
@@ -1560,9 +1343,3 @@ binance::binance(string api_key, string secret_key) {
     this->secret_key = std::move(secret_key);
     curl = nullptr;
 }
-
-
-
-
-
-
