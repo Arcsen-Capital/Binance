@@ -37,15 +37,14 @@ private:
     vector<struct lws_protocols> protocols;
 
     static map <struct lws *,CB> handles ;
+    static int  event_cb( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len );
 
 public:
     binance_websocket();
     ~binance_websocket();
-    static int  event_cb( struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len );
     void connect_endpoint(CB user_cb, const string& path);
     void init();
     void enter_event_loop();
-
 
 };
 

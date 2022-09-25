@@ -1,10 +1,5 @@
-//
-// Created by james on 24/09/22.
-//
-
 #ifndef UNTITLED1_BINANCE_UTILS_H
 #define UNTITLED1_BINANCE_UTILS_H
-
 
 #include <unistd.h>
 #include <string>

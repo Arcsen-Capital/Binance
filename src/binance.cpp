@@ -1,11 +1,8 @@
-#include "binance.h"
+#include "../include/binance.h"
 
 #include <utility>
-#include "binance_logger.h"
-#include "binance_utils.h"
-
-
-
+#include "../include/binance_logger.h"
+#include "../include/binance_utils.h"
 
 
 //---------------------------------
@@ -24,11 +21,14 @@ binance::cleanup()
     curl_global_cleanup();
 }
 
-void binance::write_log(Json::Value &json_result, const basic_string<char>& request_name, basic_string<char>& url) {
+void binance::write_log(Json::Value &json_result,
+                        const basic_string<char>& request_name,
+                        basic_string<char>& url,
+                        const string &str_result,
+                        bool show_url
+                        ) {
 
-    binance_logger::write_log( "<binance::" + request_name + ">") ;
-    string str_result;
-    curl_api( url, str_result );
+    binance_logger::write_log( "<binance::" + request_name + ">" + (!show_url ? "" :"url = |%s|"), url.c_str() ) ;
 
     if ( !str_result.empty() ) {
 
@@ -57,7 +57,9 @@ binance::get_exchangeInfo( Json::Value &json_result)
 
     string url(BINANCE_HOST);
     url += "/api/v1/exchangeInfo";
-    write_log(json_result, "get_exchangeInfo", url);
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_exchangeInfo", url, str_result, false);
 }
 //------------------
 //GET /api/v1/time
@@ -70,7 +72,9 @@ binance::get_serverTime( Json::Value &json_result)
 
     string url(BINANCE_HOST);
     url += "/api/v1/time";
-    write_log(json_result, "get_serverTime", url);
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_serverTime", url, str_result, false);
 }
 
 
@@ -86,7 +90,9 @@ binance::get_allPrices( Json::Value &json_result )
 
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allPrices";
-    write_log(json_result, "get_allPrices", url);
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_allPrices", url, str_result, false);
 
 }
 
@@ -129,7 +135,9 @@ binance::get_allBookTickers(  Json::Value &json_result )
 {
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allBookTickers";
-    write_log(json_result, "get_allBookTickers", url);
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_allBookTickers", url, str_result, false);
 
 }
 
@@ -176,7 +184,6 @@ binance::get_depth(
         Json::Value &json_result )
 {
 
-    binance_logger::write_log( "<binance::get_depth>" ) ;
 
     string url(BINANCE_HOST);
     url += "/api/v1/depth?";
@@ -187,8 +194,10 @@ binance::get_depth(
     querystring.append( to_string( limit ) );
 
     url.append( querystring );
-    write_log(json_result, "get_depth", url);
-    //binance_logger::write_log( "<binance::get_depth> url = |%s|" , url.c_str() ) ;
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_depth", url, str_result, true);
+
 }
 
 
@@ -246,8 +255,10 @@ binance::get_aggTrades(
     }
 
     url.append( querystring );
-    write_log(json_result, "get_aggTrades", url);
-    //binance_logger::write_log( "<binance::get_aggTrades> url = |%s|" , url.c_str() ) ;
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "get_aggTrades", url, str_result, true);
+
 }
 
 
@@ -274,8 +285,10 @@ binance::get_24hr( const char *symbol, Json::Value &json_result )
 
 
     url.append( querystring );
-    write_log(json_result, "get_get_24hr", url);
-    //binance_logger::write_log( "<binance::get_24hr> url = |%s|" , url.c_str() ) ;
+    string str_result;
+    curl_api( url, str_result );
+    write_log(json_result, "_get_24hr", url, str_result, true);
+
 
 }
 
@@ -304,8 +317,6 @@ binance::get_klines(
         Json::Value &json_result )
 {
 
-    binance_logger::write_log( "<binance::get_klines>" ) ;
-
     string url(BINANCE_HOST);
     url += "/api/v1/klines?";
 
@@ -330,40 +341,11 @@ binance::get_klines(
 
 
     url.append( querystring );
-    binance_logger::write_log( "<binance::get_klines> url = |%s|" , url.c_str() ) ;
-
     string str_result;
-    curl_api( url, str_result ) ;
+    curl_api( url, str_result );
+    write_log(json_result, "get_klines", url, str_result, true);
 
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_klines> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_klines> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_klines> Failed to get anything." ) ;
-    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //--------------------
 // Get current account information. (SIGNED)
@@ -380,8 +362,6 @@ timestamp	LONG	YES
 void
 binance::get_account( long recvWindow,  Json::Value &json_result )
 {
-
-    binance_logger::write_log( "<binance::get_account>" ) ;
 
     if ( api_key.empty() || secret_key.empty() ) {
         binance_logger::write_log( "<binance::get_account> API Key and Secret Key has not been set." ) ;
@@ -412,39 +392,13 @@ binance::get_account( long recvWindow,  Json::Value &json_result )
     header_chunk.append( api_key );
     extra_http_header.push_back(header_chunk);
 
-    binance_logger::write_log( "<binance::get_account> url = |%s|" , url.c_str() ) ;
-
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
-
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_account> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_account> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_account> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_account> Done.\n" ) ;
+    curl_api_with_header( url, str_result , extra_http_header , post_data , action );
+    write_log(json_result, "get_account", url, str_result, false);
 
 }
-
-
-
-
-
-
 
 
 //--------------------
@@ -469,8 +423,6 @@ binance::get_myTrades(
         long recvWindow,
         Json::Value &json_result )
 {
-
-    binance_logger::write_log( "<binance::get_myTrades>" ) ;
 
     if ( api_key.empty() || secret_key.empty() ) {
         binance_logger::write_log( "<binance::get_myTrades> API Key and Secret Key has not been set." ) ;
@@ -512,44 +464,14 @@ binance::get_myTrades(
     header_chunk.append( api_key );
     extra_http_header.push_back(header_chunk);
 
-    binance_logger::write_log( "<binance::get_myTrades> url = |%s|" , url.c_str() ) ;
-
     string action = "GET";
     string post_data = "";
 
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header , post_data , action ) ;
-
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_myTrades> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_myTrades> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_myTrades> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_myTrades> Done.\n" ) ;
+    curl_api_with_header( url, str_result , extra_http_header , post_data , action );
+    write_log(json_result,"get_myTrades", url, str_result, true);
 
 }
-
-
-
-
-
-
-
-
-
-
 
 //--------------------
 // Open Orders (SIGNED)
@@ -569,9 +491,6 @@ binance::get_openOrders(
         Json::Value &json_result
 )
 {
-
-    binance_logger::write_log( "<binance::get_openOrders>" ) ;
-
     if ( api_key.empty() || secret_key.empty() ) {
         binance_logger::write_log( "<binance::get_openOrders> API Key and Secret Key has not been set." ) ;
         return ;
@@ -608,47 +527,11 @@ binance::get_openOrders(
     string action = "GET";
     string post_data ="";
 
-    binance_logger::write_log( "<binance::get_openOrders> url = |%s|" , url.c_str() ) ;
-
     string str_result;
     curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
-
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_openOrders> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_openOrders> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_openOrders> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_openOrders> Done.\n" ) ;
+    write_log(json_result, "get_openOrders", url, str_result, true);
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //--------------------
 // All Orders (SIGNED)
@@ -673,9 +556,6 @@ binance::get_allOrders(
 )
 
 {
-
-    binance_logger::write_log( "<binance::get_allOrders>" ) ;
-
     if ( api_key.empty() || secret_key.empty() ) {
         binance_logger::write_log( "<binance::get_allOrders> API Key and Secret Key has not been set." ) ;
         return ;
@@ -721,33 +601,11 @@ binance::get_allOrders(
     string action = "GET";
     string post_data ="";
 
-    binance_logger::write_log( "<binance::get_allOrders> url = |%s|" , url.c_str() ) ;
-
     string str_result;
-    curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
-
-
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_allOrders> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_allOrders> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_allOrders> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_allOrders> Done.\n" ) ;
+    curl_api_with_header( url, str_result , extra_http_header, post_data , action );
+    write_log(json_result, "get_allOrders",url, str_result, true);
 
 }
-
-
 
 //------------
 /*
@@ -1581,9 +1439,6 @@ binance::get_depositAddress(
         Json::Value &json_result )
 {
 
-
-    binance_logger::write_log( "<binance::get_depositAddress>" ) ;
-
     if ( api_key.empty() || secret_key.empty() ) {
         binance_logger::write_log( "<binance::get_depositAddress> API Key and Secret Key has not been set." ) ;
         return ;
@@ -1617,40 +1472,11 @@ binance::get_depositAddress(
 
     string post_data = "";
 
-    binance_logger::write_log( "<binance::get_depositAddress> url = |%s|" , url.c_str() ) ;
-
     string str_result;
     curl_api_with_header( url, str_result , extra_http_header, post_data , action ) ;
+    write_log(json_result,"get_depositAddress", url, str_result,true);
 
-    if ( !str_result.empty() ) {
-
-        try {
-            Json::Reader reader;
-            json_result.clear();
-            reader.parse( str_result , json_result );
-
-        } catch ( exception &e ) {
-            binance_logger::write_log( "<binance::get_depositAddress> Error ! %s", e.what() );
-        }
-        binance_logger::write_log( "<binance::get_depositAddress> Done." ) ;
-
-    } else {
-        binance_logger::write_log( "<binance::get_depositAddress> Failed to get anything." ) ;
-    }
-
-    binance_logger::write_log( "<binance::get_depositAddress> Done.\n" ) ;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 //-----------------
 // Curl's callback

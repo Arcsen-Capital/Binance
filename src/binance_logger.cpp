@@ -1,11 +1,11 @@
-#include "binance_logger.h"
+#include "../include/binance_logger.h"
 
 
 
 int    binance_logger::debug_level   = 1;
 string binance_logger::debug_log_file = "/tmp/binawatch.log";
 int    binance_logger::debug_log_file_enable = 0;
-FILE  *binance_logger::log_fp = NULL;
+FILE  *binance_logger::log_fp = nullptr;
 
 
 
@@ -25,7 +25,7 @@ binance_logger::write_log(basic_string<char, char_traits<char>, allocator<char>>
     char new_fmt[1024];
 
     struct timeval tv;
-    gettimeofday(&tv, NULL);
+    gettimeofday(&tv, nullptr);
     time_t t = tv.tv_sec;
     struct tm * now = localtime( &t );
 
