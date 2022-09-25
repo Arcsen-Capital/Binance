@@ -5,19 +5,6 @@
 
 
 //---------------------------------
-void
-binance::init() {
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-}
-
-
-void
-binance::cleanup() {
-    curl_easy_cleanup(curl);
-    curl_global_cleanup();
-}
-
 void binance::write_log(Json::Value &json_result,
                         const basic_string<char> &request_name,
                         basic_string<char> &url,
@@ -1339,7 +1326,13 @@ binance::curl_api_with_header(string &url, string &str_result, vector<string> &e
 }
 
 binance::binance(string api_key, string secret_key) {
-    this->api_key = std::move(api_key);
-    this->secret_key = std::move(secret_key);
-    curl = nullptr;
+    api_key = std::move(api_key);
+    secret_key = std::move(secret_key);
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+}
+
+binance::~binance() {
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
 }

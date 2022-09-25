@@ -43,10 +43,7 @@ private:
 
 public:
     binance(string api_key, string secret_key);
-
-    void init();
-
-    void cleanup();
+    ~binance();
 
     // Public API
     void get_exchangeInfo(Json::Value &json_result);
