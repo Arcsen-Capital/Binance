@@ -16,11 +16,11 @@
 #include <x86_64-linux-gnu/curl/curl.h>
 #include <jsoncpp/json/json.h>
 
-#define BINANCE_HOST "https://api.binance.com"
+#define BINANCE_HOST "https://api.binance_client.com"
 
 using namespace std;
 
-class binance {
+class binance_client {
 
 private:
     string api_key;
@@ -42,8 +42,8 @@ private:
 
 
 public:
-    binance(string api_key, string secret_key);
-    ~binance();
+    binance_client(string api_key, string secret_key);
+    ~binance_client();
 
     // Public API
     void get_exchangeInfo(Json::Value &json_result);

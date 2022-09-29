@@ -1,18 +1,18 @@
-#include "../include/binance.h"
+#include "../include/binance_client.h"
 #include "../include/binance_logger.h"
 #include "../include/binance_utils.h"
 #include <utility>
 
 
 //---------------------------------
-void binance::write_log(Json::Value &json_result,
-                        const basic_string<char> &request_name,
-                        basic_string<char> &url,
-                        const string &str_result,
-                        bool show_url
+void binance_client::write_log(Json::Value &json_result,
+                               const basic_string<char> &request_name,
+                               basic_string<char> &url,
+                               const string &str_result,
+                               bool show_url
 ) {
 
-    binance_logger::write_log("<binance::" + request_name + ">" + (!show_url ? "" : "url = |%s|"), url.c_str());
+    binance_logger::write_log("<binance_client::" + request_name + ">" + (!show_url ? "" : "url = |%s|"), url.c_str());
 
     if (!str_result.empty()) {
 
@@ -22,12 +22,12 @@ void binance::write_log(Json::Value &json_result,
             reader.parse(str_result, json_result);
 
         } catch (exception &e) {
-            binance_logger::write_log("<binance::" + request_name + "> Error ! %s", e.what());
+            binance_logger::write_log("<binance_client::" + request_name + "> Error ! %s", e.what());
         }
-        binance_logger::write_log("<binance::" + request_name + "> Done.");
+        binance_logger::write_log("<binance_client::" + request_name + "> Done.");
 
     } else {
-        binance_logger::write_log("<binance::" + request_name + "> Failed to get anything.");
+        binance_logger::write_log("<binance_client::" + request_name + "> Failed to get anything.");
     }
 
 }
@@ -36,7 +36,7 @@ void binance::write_log(Json::Value &json_result,
 //GET api/v1/exchangeInfo
 //------------------
 void
-binance::get_exchangeInfo(Json::Value &json_result) {
+binance_client::get_exchangeInfo(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/exchangeInfo";
@@ -51,7 +51,7 @@ binance::get_exchangeInfo(Json::Value &json_result) {
 
 
 void
-binance::get_serverTime(Json::Value &json_result) {
+binance_client::get_serverTime(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/time";
@@ -68,7 +68,7 @@ binance::get_serverTime(Json::Value &json_result) {
 	GET /api/v1/ticker/allPrices
 */
 void
-binance::get_allPrices(Json::Value &json_result) {
+binance_client::get_allPrices(Json::Value &json_result) {
 
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allPrices";
@@ -82,8 +82,8 @@ binance::get_allPrices(Json::Value &json_result) {
 //----------
 // Get Single Pair's Price
 double
-binance::get_price(const char *symbol) {
-    binance_logger::write_log("<binance::get_price>");
+binance_client::get_price(const char *symbol) {
+    binance_logger::write_log("<binance_client::get_price>");
 
     double ret = 0.0;
     Json::Value alltickers;
@@ -112,7 +112,7 @@ binance::get_price(const char *symbol) {
 */
 
 void
-binance::get_allBookTickers(Json::Value &json_result) {
+binance_client::get_allBookTickers(Json::Value &json_result) {
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/allBookTickers";
     string str_result;
@@ -124,8 +124,8 @@ binance::get_allBookTickers(Json::Value &json_result) {
 
 //--------------
 void
-binance::get_bookTicker(const char *symbol, Json::Value &json_result) {
-    binance_logger::write_log("<binance::get_BookTickers>");
+binance_client::get_bookTicker(const char *symbol, Json::Value &json_result) {
+    binance_logger::write_log("<binance_client::get_BookTickers>");
 
     Json::Value alltickers;
     string str_symbol = string_toupper(symbol);
@@ -156,7 +156,7 @@ limit	INT		NO		Default 100; max 100.
 */
 
 void
-binance::get_depth(
+binance_client::get_depth(
         const char *symbol,
         int limit,
         Json::Value &json_result) {
@@ -198,7 +198,7 @@ limit		INT	NO		Default 500; max 500.
 */
 
 void
-binance::get_aggTrades(
+binance_client::get_aggTrades(
         const char *symbol,
         int fromId,
         time_t startTime,
@@ -247,9 +247,9 @@ Name	Type	Mandatory	Description
 symbol	STRING	YES
 */
 void
-binance::get_24hr(const char *symbol, Json::Value &json_result) {
+binance_client::get_24hr(const char *symbol, Json::Value &json_result) {
 
-    binance_logger::write_log("<binance::get_24hr>");
+    binance_logger::write_log("<binance_client::get_24hr>");
 
     string url(BINANCE_HOST);
     url += "/api/v1/ticker/24hr?";
@@ -282,7 +282,7 @@ endTime		LONG	NO
 */
 
 void
-binance::get_klines(
+binance_client::get_klines(
         const char *symbol,
         const char *interval,
         int limit,
@@ -333,10 +333,10 @@ timestamp	LONG	YES
 
 
 void
-binance::get_account(long recvWindow, Json::Value &json_result) {
+binance_client::get_account(long recvWindow, Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_account> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_account> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -388,7 +388,7 @@ timestamp	LONG	YES
 
 
 void
-binance::get_myTrades(
+binance_client::get_myTrades(
         const char *symbol,
         int limit,
         long fromId,
@@ -396,7 +396,7 @@ binance::get_myTrades(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_myTrades> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_myTrades> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -456,13 +456,13 @@ timestamp	LONG	YES
 */
 
 void
-binance::get_openOrders(
+binance_client::get_openOrders(
         const char *symbol,
         long recvWindow,
         Json::Value &json_result
 ) {
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_openOrders> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_openOrders> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -517,7 +517,7 @@ timestamp	LONG	YES
 */
 
 void
-binance::get_allOrders(
+binance_client::get_allOrders(
         const char *symbol,
         long orderId,
         int limit,
@@ -525,7 +525,7 @@ binance::get_allOrders(
         Json::Value &json_result
 ) {
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_allOrders> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_allOrders> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -595,7 +595,7 @@ timestamp			LONG		YES
 */
 
 void
-binance::send_order(
+binance_client::send_order(
         const char *symbol,
         const char *side,
         const char *type,
@@ -609,7 +609,7 @@ binance::send_order(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::send_order> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -671,7 +671,7 @@ binance::send_order(
     header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    //binance_logger::write_log("<binance::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
+    //binance_logger::write_log("<binance_client::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
     curl_api_with_header(url, str_result, extra_http_header, post_data, action);
@@ -693,7 +693,7 @@ timestamp			LONG	YES
 */
 
 void
-binance::get_order(
+binance_client::get_order(
         const char *symbol,
         long orderId,
         const char *origClientOrderId,
@@ -701,7 +701,7 @@ binance::get_order(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_order> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_order> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -744,7 +744,7 @@ binance::get_order(
 
     string post_data = "";
 
-    //binance_logger::write_log("<binance::get_order> url = |%s|", url.c_str());
+    //binance_logger::write_log("<binance_client::get_order> url = |%s|", url.c_str());
 
     string str_result;
     curl_api_with_header(url, str_result, extra_http_header, post_data, action);
@@ -767,7 +767,7 @@ timestamp			LONG	YES
 */
 
 void
-binance::cancel_order(
+binance_client::cancel_order(
         const char *symbol,
         long orderId,
         const char *origClientOrderId,
@@ -776,7 +776,7 @@ binance::cancel_order(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::send_order> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -823,7 +823,7 @@ binance::cancel_order(
     header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    //binance_logger::write_log("<binance::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
+    //binance_logger::write_log("<binance_client::send_order> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
     curl_api_with_header(url, str_result, extra_http_header, post_data, action);
@@ -834,10 +834,10 @@ binance::cancel_order(
 //Start user data stream (API-KEY)
 
 void
-binance::start_userDataStream(Json::Value &json_result) {
+binance_client::start_userDataStream(Json::Value &json_result) {
 
     if (api_key.empty()) {
-        binance_logger::write_log("<binance::start_userDataStream> API Key has not been set.");
+        binance_logger::write_log("<binance_client::start_userDataStream> API Key has not been set.");
         return;
     }
 
@@ -864,11 +864,11 @@ binance::start_userDataStream(Json::Value &json_result) {
 //--------------------
 //Keepalive user data stream (API-KEY)
 void
-binance::keep_userDataStream(const char *listenKey) {
-    binance_logger::write_log("<binance::keep_userDataStream>");
+binance_client::keep_userDataStream(const char *listenKey) {
+    binance_logger::write_log("<binance_client::keep_userDataStream>");
 
     if (api_key.empty()) {
-        binance_logger::write_log("<binance::keep_userDataStream> API Key has not been set.");
+        binance_logger::write_log("<binance_client::keep_userDataStream> API Key has not been set.");
         return;
     }
 
@@ -887,7 +887,7 @@ binance::keep_userDataStream(const char *listenKey) {
     string post_data("listenKey=");
     post_data.append(listenKey);
 
-    binance_logger::write_log("<binance::keep_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
+    binance_logger::write_log("<binance_client::keep_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
                               post_data.c_str());
 
     string str_result;
@@ -895,24 +895,24 @@ binance::keep_userDataStream(const char *listenKey) {
 
     if (!str_result.empty()) {
 
-        binance_logger::write_log("<binance::keep_userDataStream> Done.");
+        binance_logger::write_log("<binance_client::keep_userDataStream> Done.");
 
     } else {
-        binance_logger::write_log("<binance::keep_userDataStream> Failed to get anything.");
+        binance_logger::write_log("<binance_client::keep_userDataStream> Failed to get anything.");
     }
 
-    binance_logger::write_log("<binance::keep_userDataStream> Done.\n");
+    binance_logger::write_log("<binance_client::keep_userDataStream> Done.\n");
 
 }
 
 //--------------------
 //Keepalive user data stream (API-KEY)
 void
-binance::close_userDataStream(const char *listenKey) {
-    binance_logger::write_log("<binance::close_userDataStream>");
+binance_client::close_userDataStream(const char *listenKey) {
+    binance_logger::write_log("<binance_client::close_userDataStream>");
 
     if (api_key.empty()) {
-        binance_logger::write_log("<binance::close_userDataStream> API Key has not been set.");
+        binance_logger::write_log("<binance_client::close_userDataStream> API Key has not been set.");
         return;
     }
 
@@ -931,7 +931,7 @@ binance::close_userDataStream(const char *listenKey) {
     string post_data("listenKey=");
     post_data.append(listenKey);
 
-    binance_logger::write_log("<binance::close_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
+    binance_logger::write_log("<binance_client::close_userDataStream> url = |%s|, post_data = |%s|", url.c_str(),
                               post_data.c_str());
 
     string str_result;
@@ -939,13 +939,13 @@ binance::close_userDataStream(const char *listenKey) {
 
     if (!str_result.empty()) {
 
-        binance_logger::write_log("<binance::close_userDataStream> Done.");
+        binance_logger::write_log("<binance_client::close_userDataStream> Done.");
 
     } else {
-        binance_logger::write_log("<binance::close_userDataStream> Failed to get anything.");
+        binance_logger::write_log("<binance_client::close_userDataStream> Failed to get anything.");
     }
 
-    binance_logger::write_log("<binance::close_userDataStream> Done.\n");
+    binance_logger::write_log("<binance_client::close_userDataStream> Done.\n");
 
 }
 
@@ -966,7 +966,7 @@ timestamp	LONG	YES
 
 */
 void
-binance::withdraw(
+binance_client::withdraw(
         const char *asset,
         const char *address,
         const char *addressTag,
@@ -976,7 +976,7 @@ binance::withdraw(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::send_order> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::send_order> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -1022,7 +1022,7 @@ binance::withdraw(
     header_chunk.append(api_key);
     extra_http_header.push_back(header_chunk);
 
-    //binance_logger::write_log("<binance::withdraw> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
+    //binance_logger::write_log("<binance_client::withdraw> url = |%s|, post_data = |%s|", url.c_str(), post_data.c_str());
 
     string str_result;
     curl_api_with_header(url, str_result, extra_http_header, post_data, action);
@@ -1046,7 +1046,7 @@ recvWindow	LONG	NO
 timestamp	LONG	YES
 */
 void
-binance::get_depositHistory(
+binance_client::get_depositHistory(
         const char *asset,
         int status,
         long startTime,
@@ -1055,7 +1055,7 @@ binance::get_depositHistory(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_depostHistory> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_depostHistory> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -1130,7 +1130,7 @@ timestamp	LONG	YES
 */
 
 void
-binance::get_withdrawHistory(
+binance_client::get_withdrawHistory(
         const char *asset,
         int status,
         long startTime,
@@ -1139,7 +1139,7 @@ binance::get_withdrawHistory(
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_withdrawHistory> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_withdrawHistory> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -1211,13 +1211,13 @@ timestamp	LONG	YES
 */
 
 void
-binance::get_depositAddress(
+binance_client::get_depositAddress(
         const char *asset,
         long recvWindow,
         Json::Value &json_result) {
 
     if (api_key.empty() || secret_key.empty()) {
-        binance_logger::write_log("<binance::get_depositAddress> API Key and Secret Key has not been set.");
+        binance_logger::write_log("<binance_client::get_depositAddress> API Key and Secret Key has not been set.");
         return;
     }
 
@@ -1258,18 +1258,18 @@ binance::get_depositAddress(
 //-----------------
 // Curl's callback
 size_t
-binance::curl_cb(void *content, size_t size, size_t nmemb, std::string *buffer) {
-    binance_logger::write_log("<binance::curl_cb> ");
+binance_client::curl_cb(void *content, size_t size, size_t nmemb, std::string *buffer) {
+    binance_logger::write_log("<binance_client::curl_cb> ");
 
     buffer->append((char *) content, size * nmemb);
 
-    binance_logger::write_log("<binance::curl_cb> done");
+    binance_logger::write_log("<binance_client::curl_cb> done");
     return size * nmemb;
 }
 
 //--------------------------------------------------
 void
-binance::curl_api(string &url, string &result_json) {
+binance_client::curl_api(string &url, string &result_json) {
     vector<string> v;
     string action = "GET";
     string post_data = "";
@@ -1280,10 +1280,10 @@ binance::curl_api(string &url, string &result_json) {
 //--------------------
 // Do the curl
 void
-binance::curl_api_with_header(string &url, string &str_result, vector<string> &extra_http_header, string &post_data,
-                              string &action) {
+binance_client::curl_api_with_header(string &url, string &str_result, vector<string> &extra_http_header, string &post_data,
+                                     string &action) {
 
-    binance_logger::write_log("<binance::curl_api>");
+    binance_logger::write_log("<binance_client::curl_api>");
 
     CURLcode res;
 
@@ -1316,23 +1316,23 @@ binance::curl_api_with_header(string &url, string &str_result, vector<string> &e
 
         /* Check for errors */
         if (res != CURLE_OK) {
-            binance_logger::write_log("<binance::curl_api> curl_easy_perform() failed: %s", curl_easy_strerror(res));
+            binance_logger::write_log("<binance_client::curl_api> curl_easy_perform() failed: %s", curl_easy_strerror(res));
         }
 
     }
 
-    binance_logger::write_log("<binance::curl_api> done");
+    binance_logger::write_log("<binance_client::curl_api> done");
 
 }
 
-binance::binance(string api_key, string secret_key) {
-    api_key = std::move(api_key);
-    secret_key = std::move(secret_key);
+binance_client::binance_client(string api_key, string secret_key) {
+    this->api_key = std::move(api_key);
+    this->secret_key = std::move(secret_key);
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
 }
 
-binance::~binance() {
+binance_client::~binance_client() {
     curl_easy_cleanup(curl);
     curl_global_cleanup();
 }

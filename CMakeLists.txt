@@ -10,6 +10,9 @@ set(CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
         OWNER_WRITE
         OWNER_EXECUTE
         GROUP_READ
+        GROUP_EXECUTE
+        WORLD_READ
+        WORLD_EXECUTE
         )
 get_filename_component(
         LIB_WEBSOCKETS_INSTALL_DIR
@@ -21,25 +24,27 @@ get_filename_component(
         ${LIB_CURL_LIBRARY_DIRS}
         DIRECTORY
 )
-add_library(binance SHARED src/binance_websocket.cpp include/binance_websocket.h src/binance_logger.cpp include/binance_logger.h src/binance.cpp include/binance.h src/binance_utils.cpp include/binance_utils.h)
+add_library(binance SHARED src/binance_websocket.cpp include/binance_websocket.h src/binance_logger.cpp include/binance_logger.h src/binance_client.cpp include/binance_client.h src/binance_utils.cpp include/binance_utils.h)
 target_link_libraries(
         binance
         ${LIB_WEBSOCKETS_LIBRARIES}
         ${LIB_CURL_LIBRARIES}
 )
+target_include_directories(binance PRIVATE ./src PUBLIC ./include)
+set(PUBLIC_HEADERS
+        include/binance_client.h
+        include/binance_websocket.h
+        )
 set_target_properties(binance PROPERTIES
         VERSION 1.0.1
-        SOVERSION 1
-        PUBLIC_HEADER api/binance.h)
+        SOVERSION ${PROJECT_VERSION}
+        PUBLIC_HEADER "${PUBLIC_HEADERS}"
+        )
 configure_file(binance.pc.in binance.pc @ONLY)
-target_include_directories(binance PRIVATE ./src INTERFACE ./include)
 install(TARGETS binance
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${CMAKE_BINARY_DIR}/binance.pc
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
-        PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
         )
-
-
 
