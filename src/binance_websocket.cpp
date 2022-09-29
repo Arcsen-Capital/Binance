@@ -1,5 +1,5 @@
-#include "binance_websocket.h"
-#include "binance_logger.h"
+#include "../include/binance_websocket.h"
+#include "../include/binance_logger.h"
 
 map <struct lws *,CB> binance_websocket::handles ;
 
@@ -61,16 +61,14 @@ binance_websocket::event_cb( struct lws *wsi, enum lws_callback_reasons reason, 
 void
 binance_websocket::init( )
 {
-    struct lws_context_creation_info info;
-    memset( &info, 0, sizeof(info) );
+    unique_ptr<lws_context_creation_info> info = make_unique<lws_context_creation_info>();
+    info->port = CONTEXT_PORT_NO_LISTEN;
+    info->protocols = &(this->protocols[0]);
+    info->gid = -1;
+    info->uid = -1;
+    info->options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+    context = lws_create_context(info.release());
 
-    info.port = CONTEXT_PORT_NO_LISTEN;
-    info.protocols = &(this->protocols[0]);
-    info.gid = -1;
-    info.uid = -1;
-    info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-
-    context = lws_create_context(&info );
 }
 
 
@@ -79,23 +77,20 @@ binance_websocket::init( )
 void
 binance_websocket::connect_endpoint (CB cb, const string& path)
 {
-    //char ws_path[1024];
-    //strcpy( ws_path, path.c_str() );
-
     /* Connect if we are not connected to the server. */
-    struct lws_client_connect_info ccinfo = {0};
-    ccinfo.context 	= this->context;
-    ccinfo.address 	= BINANCE_WS_HOST;
-    ccinfo.port 	= BINANCE_WS_PORT;
-    ccinfo.path 	= path.c_str();
-    ccinfo.host 	= lws_canonical_hostname( context );
-    ccinfo.origin 	= "origin";
-    ccinfo.protocol = this->protocols[0].name;
-    ccinfo.ssl_connection = LCCSCF_USE_SSL | LCCSCF_ALLOW_SELFSIGNED | LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
+    unique_ptr<lws_client_connect_info> ccinfo = make_unique<lws_client_connect_info>();
+    //struct lws_client_connect_info ccinfo = {0};
+    ccinfo->context 	= context;
+    ccinfo->address 	= BINANCE_WS_HOST;
+    ccinfo->port 	= BINANCE_WS_PORT;
+    ccinfo->path 	= path.c_str();
+    ccinfo->host 	= lws_canonical_hostname( context );
+    ccinfo->origin 	= "origin";
+    ccinfo->protocol = protocols[0].name;
+    ccinfo->ssl_connection = LCCSCF_USE_SSL | LCCSCF_ALLOW_SELFSIGNED | LCCSCF_SKIP_SERVER_CERT_HOSTNAME_CHECK;
 
-    struct lws* conn = lws_client_connect_via_info(&ccinfo);
+    struct lws* conn = lws_client_connect_via_info(ccinfo.release());
     handles[conn] = cb;
-
 
 }
 
@@ -118,14 +113,14 @@ binance_websocket::enter_event_loop()
 }
 
 binance_websocket::binance_websocket() {
-    this->context = nullptr;
-    this->protocols.push_back( {
+    context = nullptr;
+    protocols.push_back( {
                                        "websocket",
                                        binance_websocket::event_cb,
                                        0,
                                        65536,
                                });
-    this->protocols.push_back({ NULL, NULL, 0, 0 });
+    protocols.push_back({ nullptr, nullptr, 0, 0 });
 }
 
 binance_websocket::~binance_websocket() {
