@@ -15,7 +15,7 @@ The work is still in progress, if you wanna contribute, contact me on linkedin h
 - sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 - cmake --version
 
-## step to build the library:
+## step to build and install the library:
 
 - mkdir build_dynamic
 - cd build_dynamic
